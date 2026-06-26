@@ -17,15 +17,18 @@ def api_get(path, params=None, absolute_url=None):
     url = absolute_url or f"{BASE_URL}{path}"
     params = params or {}
 
-    if absolute_url:
-        # paging.next には access_token が含まれることがあるので無理に足さない
-        pass
-    else:
+    if not absolute_url:
         params["access_token"] = TOKEN
 
     resp = session.get(url, params=params, timeout=60)
-    resp.raise_for_status()
-    data = resp.json()
+
+    try:
+        data = resp.json()
+    except Exception:
+        data = {"raw_text": resp.text}
+
+    if not resp.ok:
+        raise RuntimeError(f"HTTP {resp.status_code}: {data}")
 
     if isinstance(data, dict) and "error" in data:
         raise RuntimeError(data["error"])
