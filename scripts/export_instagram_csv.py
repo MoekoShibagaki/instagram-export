@@ -60,7 +60,7 @@ def write_csv(path, rows):
 
 def get_me():
     data = api_get("/me", {
-        "fields": "user_id,username,name,account_type,followers_count,follows_count,media_count"
+        "fields": "user_id,username"
     })
 
     if "data" in data and isinstance(data["data"], list):
@@ -68,6 +68,11 @@ def get_me():
             raise RuntimeError("/me returned empty data")
         return data["data"][0]
 
+    return data
+
+def get_account_profile(ig_user_id):
+    fields = "id,username,name,account_type,followers_count,follows_count,media_count"
+    data = api_get(f"/{ig_user_id}", {"fields": fields})
     return data
 
 
@@ -141,17 +146,19 @@ def main():
     ig_user_id = me.get("user_id", me.get("id"))
     username = me.get("username")
 
+    profile = get_account_profile(ig_user_id)
+
     print(f"IG user: {ig_user_id} / {username}")
 
     account_master = [{
-        "ig_user_id": ig_user_id,
-        "username": username,
-        "name": me.get("name"),
-        "account_type": me.get("account_type"),
-        "followers_count": me.get("followers_count"),
-        "follows_count": me.get("follows_count"),
-        "media_count": me.get("media_count"),
-        "extracted_at_utc": extracted_at,
+    "ig_user_id": ig_user_id,
+    "username": username,
+    "name": profile.get("name"),
+    "account_type": profile.get("account_type"),
+    "followers_count": profile.get("followers_count"),
+    "follows_count": profile.get("follows_count"),
+    "media_count": profile.get("media_count"),
+    "extracted_at_utc": extracted_at,
     }]
     write_csv(OUTPUT_DIR / "account_master.csv", account_master)
 
